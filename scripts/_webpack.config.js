@@ -4,6 +4,7 @@ module.exports = {
   mode: 'development',
   // To be added by consumer
   //entry: './src/index.ts',
+  devtool: false,
   module: {
     rules: [
       {

@@ -54,7 +54,6 @@ const afterEmit = () => {
   try {
     chmod(absDestPath(day), 755);
     _log(SEP);
-    // TODO - why does the source code of ${absDestPath(day)} print to stdout here?!
     execSync(`node ${absDestPath(day)}`, {
       stdio: "inherit",
     });
@@ -87,7 +86,6 @@ const handler = (err, stats) => {
         _error('Compiler closed with error', closeErr);
         return;
       }
-      afterEmit();
     });
   }
 };
