@@ -28,12 +28,6 @@ const srcPath = (d) => `./src/${d}.ts`;
 const destFile = (d) => `${d}.js`;
 
 try {
-  fs.unlinkSync(absDestPath(day));
-} catch(err) {
-  // nvm
-}
-
-try {
   if (!fs.existsSync(absSrcPath(day))) {
     _error('You asked me to run day', day, 'but', absSrcPath(day), 'does not exist.');
     return;
@@ -42,21 +36,9 @@ try {
   _error('You asked me to run day', day, 'but accessing', absSrcPath(day), 'caused a bad thing', err);
 }
 
-_log('Running day', day, ', file', srcPath(day));
+_log('Building', srcPath(day));
 
 const makeConfig = (config) => {
-  config.plugins = [];
-  config.plugins.push(function () {
-    this.hooks.done.tapAsync('done', function (stats, callback) {
-      if (stats.compilation.errors.length > 0) {
-        throw new Error(
-          stats.compilation.errors.map(err => err.message || err)
-        );
-      }
-      callback();
-    });
-  });
-
   return Object.assign(config, {
     entry: `${srcPath(day)}`,
     output: Object.assign(config.output, {
@@ -66,10 +48,28 @@ const makeConfig = (config) => {
   });  
 };
 
-_log('Configuring compiler for', day, ', file', srcPath(day));
 const compiler = webpack(makeConfig(baseConfig));
 
-_log('Running compiler for', day, ', file', srcPath(day));
+const afterEmit = () => {
+  try {
+    chmod(absDestPath(day), 755);
+    _log(SEP);
+    // TODO - why does the source code of ${absDestPath(day)} print to stdout here?!
+    execSync(`node ${absDestPath(day)}`, {
+      stdio: "inherit",
+    });
+    _log(SEP);
+    _log(`${day} execution complete.`);
+  } catch (e) {
+    _error(`${day} execution failed.`, e);
+  }
+};
+
+compiler.hooks.shouldEmit.tap('ShouldEmitPlugin', (compilation) => {
+  return !compilation.getStats().hasErrors();
+});
+
+compiler.hooks.afterEmit.tap('AfterEmitPlugin', () => afterEmit());
 
 const handler = (err, stats) => {
   if (err) {
@@ -81,23 +81,15 @@ const handler = (err, stats) => {
     colors: true
   }));
 
-  compiler.close((closeErr) => {
-    _log('Compiler closed. Running day bundle', destFile(day));
-
-    try {
-      chmod(absDestPath(day), 500);
-
-      _log(SEP);
-      execSync(`node ${absDestPath(day)}`, {
-        stdio: "inherit",
-      });
-      _log(SEP);
-      
-      _log(`${day} run execution complete.`);
-    } catch (e) {
-      _error(`${day} run execution failed.`, e);
-    }
-  });
+  if (!process.env.WATCH) {
+    compiler.close((closeErr) => {
+      if (closeErr) {
+        _error('Compiler closed with error', closeErr);
+        return;
+      }
+      afterEmit();
+    });
+  }
 };
 
 const watchOptions = {

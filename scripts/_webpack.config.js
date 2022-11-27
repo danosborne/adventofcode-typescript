@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  mode: 'production',
+  mode: 'development',
   // To be added by consumer
   //entry: './src/index.ts',
   module: {
@@ -20,7 +20,10 @@ module.exports = {
     // To be added by consumer
     // filename: 'bundle.js',
     // path: path.resolve(process.cwd(), 'dist'),
+    clean: true,
+    iife: false
   },
+  
   node: {
     global: false,
     __filename: false,
