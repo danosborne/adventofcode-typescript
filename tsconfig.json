@@ -1,0 +1,20 @@
+{ 
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
+  "extends": "@tsconfig/node16/tsconfig.json" 
+  // ,
+  // "outDir": "./dist"
+}
+
+// {
+//   "compilerOptions": {
+//     "outDir": "./dist/",
+//     "noImplicitAny": true,
+//     "module": "es6",
+//     "target": "es5",
+//     "jsx": "react",
+//     "allowJs": true,
+//     "moduleResolution": "node"
+//   }
+// }
