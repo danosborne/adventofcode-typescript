@@ -28,6 +28,12 @@ const srcPath = (d) => `./src/${d}.ts`;
 const destFile = (d) => `${d}.js`;
 
 try {
+  fs.unlinkSync(absDestPath(day));
+} catch(err) {
+  // nvm
+}
+
+try {
   if (!fs.existsSync(absSrcPath(day))) {
     _error('You asked me to run day', day, 'but', absSrcPath(day), 'does not exist.');
     return;
@@ -39,13 +45,25 @@ try {
 _log('Running day', day, ', file', srcPath(day));
 
 const makeConfig = (config) => {
+  config.plugins = [];
+  config.plugins.push(function () {
+    this.hooks.done.tapAsync('done', function (stats, callback) {
+      if (stats.compilation.errors.length > 0) {
+        throw new Error(
+          stats.compilation.errors.map(err => err.message || err)
+        );
+      }
+      callback();
+    });
+  });
+
   return Object.assign(config, {
     entry: `${srcPath(day)}`,
     output: Object.assign(config.output, {
       filename: `${destFile(day)}`,
       path: path.resolve(process.cwd(), 'dist'),
     })
-  });
+  });  
 };
 
 _log('Configuring compiler for', day, ', file', srcPath(day));
